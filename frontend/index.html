@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redirect Checker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222536;
+      --border: #2e3148;
+      --accent: #6c63ff;
+      --accent-glow: rgba(108, 99, 255, 0.25);
+      --text: #e2e4f0;
+      --text-muted: #7b7f9e;
+      --green: #22c55e;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --gray: #6b7280;
+      --radius: 10px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a1d27 0%, #13152099 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 0;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #6c63ff, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+    header p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 6px;
+    }
+
+    /* ── Main layout ── */
+    .container { max-width: 860px; margin: 0 auto; padding: 0 20px; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin: 28px 0 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 9px 0;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .tab-btn:hover:not(.active) { background: var(--surface2); color: var(--text); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    /* ── Input row ── */
+    .input-row {
+      display: flex;
+      gap: 10px;
+    }
+    .url-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .url-input:focus { border-color: var(--accent); }
+    .url-input::placeholder { color: var(--text-muted); }
+    textarea.url-input { resize: vertical; min-height: 130px; font-family: var(--font); line-height: 1.6; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 11px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 0 0 var(--accent-glow);
+    }
+    .btn-primary:hover { background: #7c75ff; box-shadow: 0 0 16px var(--accent-glow); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { color: var(--text); border-color: var(--accent); }
+
+    /* ── Options row ── */
+    .options-row {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .option-group {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .option-group label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .option-group input[type="number"] {
+      width: 68px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.8rem;
+      padding: 5px 8px;
+      outline: none;
+    }
+    .option-group input[type="number"]:focus { border-color: var(--accent); }
+    .option-group select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.8rem;
+      padding: 5px 8px;
+      outline: none;
+    }
+
+    /* ── Loading spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 15px; height: 15px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Result ── */
+    #result, #bulk-result { margin-top: 24px; }
+
+    .summary-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 16px;
+    }
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .summary-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .summary-value { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+
+    .final-url-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+    .final-url-text {
+      font-size: 0.85rem;
+      color: var(--green);
+      word-break: break-all;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+    .copy-btn {
+      flex-shrink: 0;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+    /* ── Redirect chain ── */
+    .chain-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .chain {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .hop {
+      display: flex;
+      gap: 0;
+    }
+    .hop-connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 36px;
+      flex-shrink: 0;
+    }
+    .hop-dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+    .hop-line {
+      width: 2px;
+      flex: 1;
+      min-height: 12px;
+      background: var(--border);
+    }
+    .hop:last-child .hop-line { display: none; }
+
+    .hop-content {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      margin-left: 8px;
+      transition: border-color 0.2s;
+    }
+    .hop-content:hover { border-color: #3e4260; }
+
+    .hop-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .hop-url {
+      flex: 1;
+      font-size: 0.85rem;
+      font-family: "SF Mono", "Fira Code", monospace;
+      color: var(--text);
+      word-break: break-all;
+      line-height: 1.4;
+    }
+    .hop-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .status-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .time-badge {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: var(--surface2);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .hop-detail {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .hop-detail span b { color: var(--text-muted); font-weight: 500; }
+    .hop-detail span { color: #9ca3af; }
+
+    /* status code coloring */
+    .s1xx { background: rgba(59,130,246,0.2); color: #93c5fd; }
+    .s2xx { background: rgba(34,197,94,0.15); color: #86efac; }
+    .s3xx { background: rgba(245,158,11,0.2); color: #fcd34d; }
+    .s4xx { background: rgba(239,68,68,0.2); color: #fca5a5; }
+    .s5xx { background: rgba(239,68,68,0.3); color: #f87171; }
+    .s0xx { background: rgba(107,114,128,0.2); color: #9ca3af; }
+
+    .dot-1xx { background: #3b82f6; color: #fff; }
+    .dot-2xx { background: #22c55e; color: #fff; }
+    .dot-3xx { background: #f59e0b; color: #fff; }
+    .dot-4xx { background: #ef4444; color: #fff; }
+    .dot-5xx { background: #dc2626; color: #fff; }
+    .dot-0xx { background: #6b7280; color: #fff; }
+
+    /* ── Error / warning ── */
+    .alert {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+    }
+    .alert-error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+    .alert-warn  { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: #fcd34d; }
+
+    /* ── Bulk results table ── */
+    .bulk-table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    thead th {
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,0.02); }
+    tbody td {
+      padding: 10px 12px;
+      color: var(--text);
+      vertical-align: top;
+    }
+    .td-url { font-family: "SF Mono", "Fira Code", monospace; font-size: 0.8rem; word-break: break-all; max-width: 220px; }
+    .td-arrow { color: var(--text-muted); font-size: 0.75rem; }
+    .expand-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      transition: all 0.2s;
+    }
+    .expand-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .bulk-detail-row { display: none; }
+    .bulk-detail-row td {
+      padding: 0 12px 12px;
+    }
+    .bulk-detail-row.open { display: table-row; }
+    .bulk-detail-inner { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+
+    /* ── History ── */
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .history-title { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .history-list { display: flex; flex-direction: column; gap: 6px; }
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .history-item:hover { border-color: var(--accent); }
+    .history-url { flex: 1; font-size: 0.82rem; font-family: "SF Mono","Fira Code",monospace; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-hops { font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; }
+    .history-time { font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; }
+
+    /* ── Divider ── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+    }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-title { font-size: 1rem; color: var(--text); margin-bottom: 6px; }
+    .empty-sub { font-size: 0.85rem; }
+
+    @media (max-width: 600px) {
+      header h1 { font-size: 1.4rem; }
+      .input-row { flex-direction: column; }
+      .hop-top { flex-direction: column; }
+      .hop-meta { flex-direction: row; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🔀 Redirect Checker</h1>
+  <p>Trace URL redirect chains, status codes, and response times</p>
+</header>
+
+<div class="container">
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="single">Single URL</button>
+    <button class="tab-btn" data-tab="bulk">Bulk Check</button>
+    <button class="tab-btn" data-tab="history">History</button>
+  </div>
+
+  <!-- ── SINGLE URL ── -->
+  <div class="tab-panel active" id="tab-single">
+    <div class="card">
+      <div class="input-row">
+        <input
+          type="text"
+          id="single-url"
+          class="url-input"
+          placeholder="https://example.com or bit.ly/shortlink"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button class="btn btn-primary" id="single-check-btn" onclick="checkSingle()">
+          Check
+        </button>
+      </div>
+      <div class="options-row">
+        <div class="option-group">
+          <label>Max redirects:</label>
+          <input type="number" id="single-max-redirects" value="20" min="1" max="50" />
+        </div>
+        <div class="option-group">
+          <label>Timeout (s):</label>
+          <input type="number" id="single-timeout" value="15" min="1" max="60" />
+        </div>
+        <div class="option-group">
+          <label>User-Agent:</label>
+          <select id="single-ua">
+            <option value="Mozilla/5.0 (compatible; RedirectChecker/1.0)">Redirect Checker</option>
+            <option value="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36">Chrome (Desktop)</option>
+            <option value="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1">Safari (Mobile)</option>
+            <option value="Googlebot/2.1 (+http://www.google.com/bot.html)">Googlebot</option>
+            <option value="facebookexternalhit/1.1">Facebook</option>
+            <option value="curl/7.88.1">curl</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="result"></div>
+  </div>
+
+  <!-- ── BULK ── -->
+  <div class="tab-panel" id="tab-bulk">
+    <div class="card">
+      <textarea
+        id="bulk-urls"
+        class="url-input"
+        placeholder="Enter one URL per line&#10;https://example.com&#10;bit.ly/test&#10;https://another.com/path"
+        spellcheck="false"
+      ></textarea>
+      <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
+        <button class="btn btn-primary" id="bulk-check-btn" onclick="checkBulk()">
+          Check All
+        </button>
+        <span id="bulk-count" style="font-size:0.8rem; color:var(--text-muted);"></span>
+      </div>
+    </div>
+    <div id="bulk-result"></div>
+  </div>
+
+  <!-- ── HISTORY ── -->
+  <div class="tab-panel" id="tab-history">
+    <div class="history-header">
+      <span class="history-title">Recent checks</span>
+      <button class="btn btn-secondary" onclick="clearHistory()" style="padding:6px 12px; font-size:0.8rem;">
+        Clear
+      </button>
+    </div>
+    <div id="history-list">
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">No history yet</div>
+        <div class="empty-sub">URLs you check will appear here</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let history = JSON.parse(localStorage.getItem('rc-history') || '[]');
+
+// ── Tabs ──
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'history') renderHistory();
+  });
+});
+
+// ── Enter key on single input ──
+document.getElementById('single-url').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkSingle();
+});
+
+// ── Bulk URL count ──
+document.getElementById('bulk-urls').addEventListener('input', () => {
+  const lines = document.getElementById('bulk-urls').value.split('\n').filter(l => l.trim());
+  const el = document.getElementById('bulk-count');
+  el.textContent = lines.length ? `${lines.length} URL${lines.length > 1 ? 's' : ''}` : '';
+});
+
+// ── Helpers ──
+function statusClass(code) {
+  if (!code) return 's0xx';
+  const d = Math.floor(code / 100);
+  return ['', 's1xx','s2xx','s3xx','s4xx','s5xx'][d] || 's0xx';
+}
+function dotClass(code) {
+  if (!code) return 'dot-0xx';
+  const d = Math.floor(code / 100);
+  return ['', 'dot-1xx','dot-2xx','dot-3xx','dot-4xx','dot-5xx'][d] || 'dot-0xx';
+}
+function truncUrl(url, max = 72) {
+  if (url.length <= max) return url;
+  const half = Math.floor((max - 3) / 2);
+  return url.slice(0, half) + '…' + url.slice(-half);
+}
+function fmtTime(ms) {
+  if (ms < 1000) return ms + ' ms';
+  return (ms / 1000).toFixed(2) + ' s';
+}
+
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+// ── Render hop chain ──
+function renderChain(hops) {
+  if (!hops.length) return '<div class="empty-state"><div>No hops recorded</div></div>';
+  return `
+    <p class="chain-title">Redirect chain — ${hops.length} hop${hops.length !== 1 ? 's' : ''}</p>
+    <div class="chain">
+      ${hops.map((hop, i) => `
+        <div class="hop">
+          <div class="hop-connector">
+            <div class="hop-dot ${dotClass(hop.status_code)}">${i + 1}</div>
+            <div class="hop-line"></div>
+          </div>
+          <div class="hop-content">
+            <div class="hop-top">
+              <div class="hop-url" title="${hop.url}">${truncUrl(hop.url)}</div>
+              <div class="hop-meta">
+                <span class="status-badge ${statusClass(hop.status_code)}">${hop.status_code || '?'} ${hop.status_text}</span>
+                <span class="time-badge">⏱ ${fmtTime(hop.response_time_ms)}</span>
+              </div>
+            </div>
+            ${(hop.content_type || hop.server || hop.location) ? `
+            <div class="hop-detail">
+              ${hop.content_type ? `<span><b>Type:</b> ${hop.content_type}</span>` : ''}
+              ${hop.server ? `<span><b>Server:</b> ${hop.server}</span>` : ''}
+              ${hop.location ? `<span><b>→</b> ${truncUrl(hop.location, 60)}</span>` : ''}
+            </div>` : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+// ── Render single result ──
+function renderSingleResult(data) {
+  const container = document.getElementById('result');
+  if (data.error && !data.hops.length) {
+    container.innerHTML = `
+      <div class="alert alert-error">
+        <span>⚠️</span>
+        <span><b>Error:</b> ${data.error}</span>
+      </div>`;
+    return;
+  }
+
+  let warnings = '';
+  if (data.error) warnings += `<div class="alert alert-warn"><span>⚠️</span><span>${data.error}</span></div>`;
+  if (data.is_loop) warnings += `<div class="alert alert-warn"><span>🔁</span><span>Redirect loop detected!</span></div>`;
+
+  container.innerHTML = `
+    ${warnings}
+    <div class="summary-bar">
+      <div class="summary-item">
+        <span class="summary-label">Redirects</span>
+        <span class="summary-value">${data.total_redirects}</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Total Time</span>
+        <span class="summary-value">${fmtTime(data.total_time_ms)}</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Hops</span>
+        <span class="summary-value">${data.hops.length}</span>
+      </div>
+      <div class="summary-item" style="flex:1; min-width:0;">
+        <span class="summary-label">Final URL</span>
+        <div class="final-url-row">
+          <span class="final-url-text" title="${data.final_url}">${truncUrl(data.final_url, 55)}</span>
+          <button class="copy-btn" onclick="copyText('${data.final_url.replace(/'/g,"\\'")}', this)">Copy</button>
+        </div>
+      </div>
+    </div>
+    ${renderChain(data.hops)}
+  `;
+}
+
+// ── Single check ──
+async function checkSingle() {
+  const url = document.getElementById('single-url').value.trim();
+  if (!url) return;
+  const btn = document.getElementById('single-check-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Checking…';
+  document.getElementById('result').innerHTML = '';
+
+  try {
+    const resp = await fetch(`${API}/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url,
+        max_redirects: parseInt(document.getElementById('single-max-redirects').value) || 20,
+        timeout: parseFloat(document.getElementById('single-timeout').value) || 15,
+        user_agent: document.getElementById('single-ua').value,
+      }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    renderSingleResult(data);
+    addHistory(data);
+  } catch (err) {
+    document.getElementById('result').innerHTML = `
+      <div class="alert alert-error">
+        <span>⚠️</span><span><b>Request failed:</b> ${err.message}. Is the backend running?</span>
+      </div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Check';
+  }
+}
+
+// ── Bulk check ──
+async function checkBulk() {
+  const raw = document.getElementById('bulk-urls').value;
+  const urls = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!urls.length) return;
+
+  const btn = document.getElementById('bulk-check-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Checking ${urls.length} URL${urls.length > 1 ? 's' : ''}…`;
+  document.getElementById('bulk-result').innerHTML = '';
+
+  try {
+    const resp = await fetch(`${API}/check/bulk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ urls, max_redirects: 20, timeout: 15 }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    renderBulkResult(data);
+  } catch (err) {
+    document.getElementById('bulk-result').innerHTML = `
+      <div class="alert alert-error">
+        <span>⚠️</span><span><b>Request failed:</b> ${err.message}</span>
+      </div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Check All';
+  }
+}
+
+// ── Bulk result ──
+function renderBulkResult(data) {
+  const container = document.getElementById('bulk-result');
+  if (!data.results || !data.results.length) {
+    container.innerHTML = '<div class="alert alert-warn"><span>⚠️</span><span>No results returned</span></div>';
+    return;
+  }
+
+  const rows = data.results.map((r, idx) => {
+    const finalStatus = r.hops.length ? r.hops[r.hops.length - 1].status_code : 0;
+    const sc = statusClass(finalStatus);
+    return `
+      <tr>
+        <td class="td-url" title="${r.original_url}">${truncUrl(r.original_url, 40)}</td>
+        <td class="td-arrow">→</td>
+        <td class="td-url" title="${r.final_url}">${truncUrl(r.final_url, 40)}</td>
+        <td><span class="status-badge ${sc}">${finalStatus || '?'}</span></td>
+        <td>${r.total_redirects}</td>
+        <td>${fmtTime(r.total_time_ms)}</td>
+        <td>${r.error ? `<span style="color:var(--red); font-size:0.75rem;">${r.error.slice(0,40)}</span>` : '—'}</td>
+        <td>
+          <button class="expand-btn" onclick="toggleBulkDetail(${idx})">Details</button>
+        </td>
+      </tr>
+      <tr class="bulk-detail-row" id="bulk-detail-${idx}">
+        <td colspan="8">
+          <div class="bulk-detail-inner">
+            ${renderChain(r.hops)}
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="card" style="padding:0; overflow:hidden;">
+      <div class="bulk-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Original URL</th>
+              <th></th>
+              <th>Final URL</th>
+              <th>Status</th>
+              <th>Hops</th>
+              <th>Time</th>
+              <th>Error</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function toggleBulkDetail(idx) {
+  const row = document.getElementById(`bulk-detail-${idx}`);
+  row.classList.toggle('open');
+}
+
+// ── History ──
+function addHistory(data) {
+  history.unshift({ url: data.original_url, finalUrl: data.final_url, hops: data.hops.length, time: data.total_time_ms, ts: Date.now() });
+  history = history.slice(0, 50);
+  localStorage.setItem('rc-history', JSON.stringify(history));
+}
+
+function clearHistory() {
+  history = [];
+  localStorage.removeItem('rc-history');
+  renderHistory();
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (!history.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No history yet</div><div class="empty-sub">URLs you check will appear here</div></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="history-list">` + history.map(h => `
+    <div class="history-item" onclick="loadFromHistory('${h.url.replace(/'/g,"\\'")}')">
+      <span class="history-url" title="${h.url}">${h.url}</span>
+      <span class="history-hops">${h.hops} hop${h.hops !== 1 ? 's' : ''}</span>
+      <span class="history-time">${fmtTime(h.time)}</span>
+    </div>
+  `).join('') + `</div>`;
+}
+
+function loadFromHistory(url) {
+  document.querySelectorAll('.tab-btn')[0].click();
+  document.getElementById('single-url').value = url;
+  checkSingle();
+}
+</script>
+</body>
+</html>
